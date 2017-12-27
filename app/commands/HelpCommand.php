@@ -28,6 +28,7 @@ class HelpCommand extends Command
         foreach ($commands as $name => $handler) {
             $text .= sprintf('/%s - %s'.PHP_EOL, $name, $handler->getDescription());
         }
+        $text .= 'Для связи со мной пишите @nakiner';
 
         $this->replyWithMessage(compact('text'));
     }
