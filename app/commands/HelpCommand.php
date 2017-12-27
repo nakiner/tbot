@@ -16,7 +16,7 @@ class HelpCommand extends Command
     /**
      * @var string Command Description
      */
-    protected $description = 'Помощь, узнать список доступных команд.';
+    protected $description = 'Помощь, узнать список доступных команд. Часть команд могут быть недоступны.';
 
     /**
      * {@inheritdoc}
