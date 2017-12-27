@@ -12,7 +12,6 @@ class StartCommand extends Command
 
     public function handle($arguments)
     {
-        $commands = $this->telegram->getCommands();
-        $this->replyWithMessage(['text' => 'Здравствуй']);
+        $this->replyWithMessage(['text' => 'Здравствуй, для помощи используй /help']);
     }
 }
