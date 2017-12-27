@@ -6,7 +6,7 @@ use Telegram\Bot\Commands\Command;
 class WorkCommand extends Command
 {
     protected $name = 'work';
-    protected $description = 'Запуск работы';
+    protected $description = 'Запуск работы бота';
 
     public function handle($arguments)
     {
