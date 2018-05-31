@@ -46,4 +46,12 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
-webhook_deploy/
+
+# Project files
+vendor/
+settings.cfg
+data/download/**
+data/upload/**
+composer.lock
+push.sh
+bot-php.txt
