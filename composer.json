@@ -1,0 +1,23 @@
+{
+	"name": "Boton",
+    "type": "project",
+    "description": "Boton Diploma stuff",
+    "keywords": ["boton", "bot", "telegram"],
+    "license": "MIT",
+    "homepage": "https://boton.app",
+    "support": {
+        "issues": "https://boton.app/help",
+        "source": "https://boton.app/contact"
+    },
+    "authors": [
+        {
+            "name": "nakiner",
+            "homepage": "https://tmtr.me/nakiner",
+            "role": "Developer"
+        }
+    ],
+	"require": {
+		"php": ">=5.5",
+        "longman/telegram-bot": "*"
+	}
+}
