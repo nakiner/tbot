@@ -73,10 +73,15 @@ class Config
         $this->upload_path = __DIR__.$this->config_vars['upload_path'];
     }
 
+    /**
+     * Осуществляет чтение конфигурационного файла
+     */
     function read_config()
     {
         $data = file_get_contents("settings.cfg");
+
         $lines = explode("\r\n", $data);
+        $lines = (count($lines) > 1) ? $lines : explode("\n", $data);
 
         foreach ($lines as $line)
         {
@@ -85,6 +90,16 @@ class Config
             $value = explode('=', $line)[1];
             $this->config_vars[$key] = $value;
         }
+    }
+
+    /**
+     * Осуществляет запись параметров
+     * в файл конфигурации
+     */
+    function write_config($array)
+    {
+//        $data = (file_exists('settings.cfg')) ? file_get_contents("settings.cfg") : rename('settings_default.cfg', 'settings.cfg');
+//        $lines = explode("\r\n", $data);
     }
 
 }

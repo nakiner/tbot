@@ -82,6 +82,11 @@ class UserCommand extends AdminCommand
                 {
                     return $this->user_action($this->getMessage(), null, $this->conversation->notes['awaiting_reply']);
                 }
+                case 'add_token':
+                case 'delete_token':
+                {
+                    return $this->token_action($this->getMessage(), null, $this->conversation->notes['awaiting_reply']);
+                }
                 default:
                 {
                     return false;
@@ -118,6 +123,7 @@ class UserCommand extends AdminCommand
      *
      * @param \Longman\TelegramBot\Entities\Message $message
      * @param string $user_idx
+     * @param string $action
      *
      * @return \Longman\TelegramBot\Entities\ServerResponse | false
      */
@@ -142,10 +148,7 @@ class UserCommand extends AdminCommand
 
             if($user_idx) return true;
 
-            if (strlen($text) < 4)
-            {
-                $data['text'] = 'Введите имя пользователя, например user123';
-            }
+            if (strlen($text) < 4) $data['text'] = 'Введите имя пользователя, например user123';
             else
             {
                 $func = new \Functions();
@@ -182,6 +185,7 @@ class UserCommand extends AdminCommand
      *
      * @param \Longman\TelegramBot\Entities\Message $message
      * @param string $user_idx
+     * @param string $action
      *
      * @return \Longman\TelegramBot\Entities\ServerResponse | false
      */
@@ -192,45 +196,39 @@ class UserCommand extends AdminCommand
             $chat_id = $message->getChat()->getId();
             $user_id = ($user_idx) ? $user_idx : $message->getFrom()->getId();
             $text = trim($message->getText(true));
-
-            $this->conversation = new Conversation($user_id, $chat_id, $this->getName());
-            $notes = &$this->conversation->notes;
-            !is_array($notes) && $notes = [];
+            $func = new \Functions();
 
             $data = [
                 'chat_id'   => $chat_id,
             ];
+
+            if($action == 'add_token')
+            {
+                $token = $func->AddToken();
+                if($token) $data['text'] = "Токен создан.\nДля активации отправьте боту:\n/start $token";
+                else $data['text'] = 'Ошибка создания токена, попробуте снова';
+                return Request::sendMessage($data);
+            }
+
+            $this->conversation = new Conversation($user_id, $chat_id, $this->getName());
+            $notes = &$this->conversation->notes;
+            !is_array($notes) && $notes = [];
 
             $notes['awaiting_reply'] = $action;
             $this->conversation->update();
 
             if($user_idx) return true;
 
-            if (strlen($text) < 4)
-            {
-                $data['text'] = 'Введите имя пользователя, например user123';
-            }
+            if (strlen($text) != 10) $data['text'] = 'Введите токен для удаления(10 символов) , например abcdef1230';
             else
             {
-                $func = new \Functions();
-                if($notes['awaiting_reply'] == 'add_user')
+                if($func->RevokeToken($text))
                 {
-                    if($func->AddAuth($text))
-                    {
-                        $data['text'] = 'Пользователь успешно добавлен';
-                        $this->conversation->stop();
-                    }
-                    else $data['text'] = 'Ошибка добавления, попробуйте еще раз';
+                    $data['text'] = 'Токен успешно удален';
+                    $this->conversation->stop();
                 }
-                else if($notes['awaiting_reply'] == 'delete_user')
-                {
-                    if($func->RevokeAuth($text))
-                    {
-                        $data['text'] = 'Пользователь успешно удален';
-                        $this->conversation->stop();
-                    }
-                    else $data['text'] = 'Пользователь не найден, попробуйте еще раз';
-                }
+                else $data['text'] = 'Токен не найден, попробуйте еще раз';
+
             }
             return Request::sendMessage($data);
         }

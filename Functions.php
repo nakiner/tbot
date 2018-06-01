@@ -32,6 +32,20 @@ class Functions
     }
 
     /**
+     * Возвращает рандомную строку
+     *
+     * @return string
+     */
+    function GenerateString($max = 10)
+    {
+        $char = "qazxswedcvfrtgbnhyujmkiolp1234567890QAZXSWEDCVFRTGBNHYUJMKIOLP";
+        $size = strlen($char)-1;
+        $key = null;
+        while($max--) { $key.=$char[rand(0,$size)]; }
+        return $key;
+    }
+
+    /**
      * Возвращает список администраторов
      *
      * @param array $admins
@@ -167,10 +181,11 @@ class Functions
      *
      * @return int
      */
-    public function AddToken($token)
+    public function AddToken()
     {
+        $token = $this->GenerateString();
         $this->db->query("INSERT INTO users_allowed (token) VALUES('$token')");
-        return $this->db->affected_rows;
+        return ($this->db->affected_rows > 0) ? $token : $this->db->affected_rows;
     }
 
     /**

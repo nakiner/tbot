@@ -58,12 +58,18 @@ class CallbackqueryCommand extends SystemCommand
             {
                 return $this->user_callback($callback_query, $data[1], $data[0]);
             }
+            case 'add_token':
+            case 'delete_token':
+            {
+                return $this->token_callback($callback_query, $data[1], $data[0]);
+            }
         }
 
         return Request::answerCallbackQuery(['callback_query_id' => $callback_query->getId()]);
     }
+
     /**
-     * Обработка нажатия кнопки "Добавить пользователя"
+     * Обработка кнопок добавить и удалить пользователя
      *
      * @param \Longman\TelegramBot\Entities\CallbackQuery $callback_query
      * @param string $user_id
@@ -87,6 +93,43 @@ class CallbackqueryCommand extends SystemCommand
 
             $cmd = new UserCommand($this->getTelegram());
             $cmd->user_action($callback_query->getMessage(), $user_id, $action);
+
+            Request::answerCallbackQuery(['callback_query_id' => $callback_query->getId()]);
+        }
+        catch(TelegramException $e)
+        {
+            //echo $e;
+        }
+    }
+
+    /**
+     * Обработка кнопок добавить и удалить токен
+     *
+     * @param \Longman\TelegramBot\Entities\CallbackQuery $callback_query
+     * @param string $user_id
+     * @param string $action
+     *
+     * @throws \Longman\TelegramBot\Exception\TelegramException
+     */
+    public function token_callback($callback_query, $user_id, $action)
+    {
+        try
+        {
+            $chat_id = $callback_query->getFrom()->getId();
+            $msg_id = $callback_query->getMessage()->getMessageId();
+
+            if($action == 'delete_token')
+            {
+                $data_edit = [
+                    'chat_id'   => $chat_id,
+                    'text' => "Введите токен для удаления(10 символов) , например abcdef1230\nДля отмены действия отправьте /cancel",
+                    'message_id' => $msg_id
+                ];
+                Request::editMessageText($data_edit);
+            }
+
+            $cmd = new UserCommand($this->getTelegram());
+            $cmd->token_action($callback_query->getMessage(), $user_id, $action);
 
             Request::answerCallbackQuery(['callback_query_id' => $callback_query->getId()]);
         }

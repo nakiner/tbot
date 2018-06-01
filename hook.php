@@ -25,43 +25,30 @@ $func = new Functions();
 
 try
 {
-    // Создание объекта класса
     $telegram = new Telegram($config->bot_api_key, $config->bot_username);
 
-    // Установка путей для поиска команд
     $telegram->addCommandsPaths($config->commands_paths);
-
-    // Импорт пользователей с привлегиями администраторов
     $telegram->enableAdmins($func->FetchAdmins());
-
-    // Добавление подключения MySQL
     $telegram->enableMySql($config->mysql_credentials);
 
-    // Логгирование ошибок
+    $telegram->setDownloadPath($config->download_path);
+    $telegram->setUploadPath($config->upload_path);
+    $telegram->enableLimiter();
+
     //Longman\TelegramBot\TelegramLog::initErrorLog(__DIR__ . "/{$bot_username}_error.log");
     //Longman\TelegramBot\TelegramLog::initDebugLog(__DIR__ . "/{$bot_username}_debug.log");
     //Longman\TelegramBot\TelegramLog::initUpdateLog(__DIR__ . "/{$bot_username}_update.log");
 
-    // Установка путей для заказчки и выгрузки файлов
-    $telegram->setDownloadPath($config->download_path);
-    $telegram->setUploadPath($config->upload_path);
-
-    // Установка ограничений на количество отправляемых данных на сервера Telegram
-    $telegram->enableLimiter();
-
-    // Запуск процедуры проверки пользователя и обслуживание запроса
     $valid = $func->CheckUserAuth();
     if($valid) $telegram->handle();
 
 }
 catch (Longman\TelegramBot\Exception\TelegramException $e)
 {
-    // Логгирование ошибок телеграма
     //echo $e;
     //Longman\TelegramBot\TelegramLog::error($e);
 }
 catch (Longman\TelegramBot\Exception\TelegramLogException $e)
 {
-    // Логгирование ошибок запуска приожения
     //echo $e;
 }
