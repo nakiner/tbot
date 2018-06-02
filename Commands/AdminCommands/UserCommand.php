@@ -298,6 +298,7 @@ class UserCommand extends AdminCommand
                         $info = $func->GetAdminInfo($admin);
                         $info = (strlen($info['last_name']) > 2) ? $info['first_name'].' '.$info['last_name'] : $info['first_name'];
                         $inline_keyboard->addRow(['text' => $info, 'callback_data' => "info_admin:$admin"]);
+                        error_log($info);
                     }
                     $inline_keyboard->addRow(['text' => 'Вернуться назад..', 'callback_data' => "menu_admin:$user_idx"]);
 
@@ -360,6 +361,12 @@ class UserCommand extends AdminCommand
                         $func = new \Functions();
                         if($func->AddAdmin($text) > 0)
                         {
+                            $tell_user = [
+                                'text' => "Вы были назначены администратором.\nСписок доступных команд /help",
+                                'chat_id' => $func->GetChatID($text)[0]
+                            ];
+                            error_log($func->GetChatID($text)[0]);
+                            Request::sendMessage($tell_user);
                             $data['text'] = 'Администратор добавлен';
                             $this->conversation->stop();
                         }

@@ -54,12 +54,13 @@ class Functions
      */
     public function FetchAdmins($admins = [])
     {
-        $result = $this->db->query('SELECT user_id FROM admins')->fetch_row();
+        $result = $this->db->query('SELECT user_id FROM admins')->fetch_all();
         if(count($result))
         {
-            foreach($result as $admin)
+            foreach($result as $line)
             {
-                $admins[] = (int) $admin;
+                $admins[] = (int) $line[0];
+
             }
         }
         return $admins;
@@ -244,5 +245,17 @@ class Functions
     {
         $this->db->query("DELETE FROM admins WHERE user_id = '$user_id'");
         return $this->db->affected_rows;
+    }
+
+    /**
+     * Узнает ID чата
+     *
+     * @param int $user_id
+     *
+     * @return int
+     */
+    public function GetChatID($user_id)
+    {
+        return $this->db->query("SELECT chat_id FROM user_chat WHERE user_id = '$user_id'")->fetch_row();
     }
 }
