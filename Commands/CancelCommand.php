@@ -16,11 +16,10 @@ use Longman\TelegramBot\Entities\Keyboard;
 use Longman\TelegramBot\Request;
 
 /**
- * User "/cancel" command
+ * Пользователькая команда "/cancel"
  *
- * This command cancels the currently active conversation and
- * returns a message to let the user know which conversation it was.
- * If no conversation is active, the returned message says so.
+ * Данная команда отменяет текущее инициорованное ранее действие,
+ * например ожидание ответа от пользователя.
  */
 class CancelCommand extends UserCommand
 {
@@ -32,7 +31,7 @@ class CancelCommand extends UserCommand
     /**
      * @var string
      */
-    protected $description = 'Cancel the currently active conversation';
+    protected $description = 'Отмена текущего действия';
 
     /**
      * @var string
@@ -42,7 +41,7 @@ class CancelCommand extends UserCommand
     /**
      * @var string
      */
-    protected $version = '0.2.1';
+    protected $version = '0.0.1';
 
     /**
      * @var bool
@@ -50,14 +49,14 @@ class CancelCommand extends UserCommand
     protected $need_mysql = true;
 
     /**
-     * Command execute method
+     * Метод для осуществления действий
      *
      * @return \Longman\TelegramBot\Entities\ServerResponse
      * @throws \Longman\TelegramBot\Exception\TelegramException
      */
     public function execute()
     {
-        $text = 'Нечего отменять!';
+        $text = 'Нет активных действий';
 
         //Cancel current conversation if any
         $conversation = new Conversation(
@@ -75,7 +74,7 @@ class CancelCommand extends UserCommand
     }
 
     /**
-     * Remove the keyboard and output a text
+     * Убирает клавиатуру, если такая присутвтвует
      *
      * @param string $text
      *
@@ -92,13 +91,13 @@ class CancelCommand extends UserCommand
     }
 
     /**
-     * Command execute method if MySQL is required but not available
+     * Вызов метода, когда нет подключения к БД
      *
      * @return \Longman\TelegramBot\Entities\ServerResponse
      * @throws \Longman\TelegramBot\Exception\TelegramException
      */
     public function executeNoDb()
     {
-        return $this->removeKeyboard('Nothing to cancel.');
+        return $this->removeKeyboard('Нет активных действий');
     }
 }

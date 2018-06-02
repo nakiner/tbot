@@ -87,6 +87,10 @@ class UserCommand extends AdminCommand
                 {
                     return $this->token_action($this->getMessage(), null, $this->conversation->notes['awaiting_reply']);
                 }
+                case 'add_admin':
+                {
+                    return $this->admin_action($this->getMessage(), null, $this->conversation->notes['awaiting_reply']);
+                }
                 default:
                 {
                     return false;
@@ -105,7 +109,11 @@ class UserCommand extends AdminCommand
                 [
                     ['text' => 'Добавить токен', 'callback_data' => "add_token:$user_id"],
                     ['text' => 'Удалить токен', 'callback_data' => "delete_token:$user_id"]
+                ],
+                [
+                    ['text' => 'Управление администраторами', 'callback_data' => "menu_admin:$user_id"],
                 ]
+
             );
 
             $data = [
@@ -154,7 +162,7 @@ class UserCommand extends AdminCommand
                 $func = new \Functions();
                 if($notes['awaiting_reply'] == 'add_user')
                 {
-                    if($func->AddAuth($text))
+                    if($func->AddAuth($text) > 0)
                     {
                         $data['text'] = 'Пользователь успешно добавлен';
                         $this->conversation->stop();
@@ -163,7 +171,7 @@ class UserCommand extends AdminCommand
                 }
                 else if($notes['awaiting_reply'] == 'delete_user')
                 {
-                    if($func->RevokeAuth($text))
+                    if($func->RevokeAuth($text) > 0)
                     {
                         $data['text'] = 'Пользователь успешно удален';
                         $this->conversation->stop();
@@ -205,7 +213,7 @@ class UserCommand extends AdminCommand
             if($action == 'add_token')
             {
                 $token = $func->AddToken();
-                if($token) $data['text'] = "Токен создан.\nДля активации отправьте боту:\n/start $token";
+                if($token > 0) $data['text'] = "Токен создан.\nДля активации отправьте боту:\n/start $token";
                 else $data['text'] = 'Ошибка создания токена, попробуте снова';
                 return Request::sendMessage($data);
             }
@@ -222,7 +230,7 @@ class UserCommand extends AdminCommand
             if (strlen($text) != 10) $data['text'] = 'Введите токен для удаления(10 символов) , например abcdef1230';
             else
             {
-                if($func->RevokeToken($text))
+                if($func->RevokeToken($text) > 0)
                 {
                     $data['text'] = 'Токен успешно удален';
                     $this->conversation->stop();
@@ -231,6 +239,164 @@ class UserCommand extends AdminCommand
 
             }
             return Request::sendMessage($data);
+        }
+        catch(TelegramException $e)
+        {
+            //echo $e;
+        }
+        return true;
+    }
+    /**
+     * Обработка добавления и удаления администратора
+     *
+     * @param \Longman\TelegramBot\Entities\Message $message
+     * @param string $user_idx
+     * @param string $action
+     *
+     * @return \Longman\TelegramBot\Entities\ServerResponse | false
+     */
+    public function admin_action($message, $user_idx = null, $action)
+    {
+        try
+        {
+            $chat_id = $message->getChat()->getId();
+            $msg_id = $message->getMessageId();
+
+            switch($action)
+            {
+                case 'menu_admin':
+                {
+                    $inline_keyboard = new InlineKeyboard
+                    (
+                        [
+                            ['text' => 'Список администраторов', 'callback_data' => "show_admin:$user_idx"]
+                        ],
+                        [
+                            ['text' => 'Добавить администратора', 'callback_data' => "add_admin:$user_idx"]
+                        ],
+                        [
+                            ['text' => 'Возврат в меню', 'callback_data' => "exit_menu_admin:$user_idx"]
+                        ]
+                    );
+
+                    $data_edit = [
+                        'chat_id'   => $chat_id,
+                        'text' => 'Управление администраторами',
+                        'message_id' => $msg_id,
+                        'reply_markup' => $inline_keyboard,
+                    ];
+
+                    return Request::editMessageText($data_edit);
+                }
+                case 'show_admin':
+                {
+                    $inline_keyboard = new InlineKeyboard();
+                    $func = new \Functions();
+                    $admins = $func->FetchAdmins();
+                    foreach ($admins as $admin)
+                    {
+                        $info = $func->GetAdminInfo($admin);
+                        $info = (strlen($info['last_name']) > 2) ? $info['first_name'].' '.$info['last_name'] : $info['first_name'];
+                        $inline_keyboard->addRow(['text' => $info, 'callback_data' => "info_admin:$admin"]);
+                    }
+                    $inline_keyboard->addRow(['text' => 'Вернуться назад..', 'callback_data' => "menu_admin:$user_idx"]);
+
+                    $data_edit = [
+                        'chat_id'   => $chat_id,
+                        'text' => 'Список администраторов',
+                        'message_id' => $msg_id,
+                        'reply_markup' => $inline_keyboard,
+                    ];
+
+                    return Request::editMessageText($data_edit);
+                }
+                case 'info_admin':
+                {
+                    $inline_keyboard = new InlineKeyboard();
+                    $inline_keyboard->addRow(['text' => 'Удалить', 'callback_data' => "delete_admin:$user_idx"]);
+                    $inline_keyboard->addRow(['text' => 'Вернуться назад..', 'callback_data' => "show_admin:$user_idx"]);
+
+                    $data_edit = [
+                        'chat_id'   => $chat_id,
+                        'text' => 'Удаление администратора',
+                        'message_id' => $msg_id,
+                        'reply_markup' => $inline_keyboard,
+                    ];
+
+                    return Request::editMessageText($data_edit);
+                }
+                case 'delete_admin':
+                {
+                    $data_edit = [
+                        'chat_id'   => $chat_id,
+                        'message_id' => $msg_id
+                    ];
+                    $func = new \Functions();
+                    if($func->RevokeAdmin($user_idx) > 0) $data_edit['text'] = 'Администратор удален';
+                    else $data_edit['text'] = 'Ошибка удаления, попробуйте снова';
+                    return Request::editMessageText($data_edit);
+                }
+                case 'add_admin':
+                {
+                    $user_id = ($user_idx) ? $user_idx : $message->getFrom()->getId();
+                    $text = trim($message->getText(true));
+
+                    $this->conversation = new Conversation($user_id, $chat_id, $this->getName());
+                    $notes = &$this->conversation->notes;
+                    !is_array($notes) && $notes = [];
+
+                    $data = [
+                        'chat_id'   => $chat_id,
+                    ];
+
+                    $notes['awaiting_reply'] = $action;
+                    $this->conversation->update();
+
+                    if($user_idx) return true;
+
+                    if (strlen($text) < 4) $data['text'] = 'Введите ID пользователя, например 123456';
+                    else
+                    {
+                        $func = new \Functions();
+                        if($func->AddAdmin($text) > 0)
+                        {
+                            $data['text'] = 'Администратор добавлен';
+                            $this->conversation->stop();
+                        }
+                        else $data['text'] = 'Ошибка добавления, попробуйте еще раз';
+                    }
+                    return Request::sendMessage($data);
+                }
+                case 'exit_menu_admin':
+                {
+                    $inline_keyboard = new InlineKeyboard
+                    (
+                        [
+                            ['text' => 'Добавить пользователя', 'callback_data' => "add_user:$user_idx"],
+                            ['text' => 'Удалить пользователя', 'callback_data' => "delete_user:$user_idx"]
+                        ],
+                        [
+                            ['text' => 'Добавить токен', 'callback_data' => "add_token:$user_idx"],
+                            ['text' => 'Удалить токен', 'callback_data' => "delete_token:$user_idx"]
+                        ],
+                        [
+                            ['text' => 'Управление администраторами', 'callback_data' => "menu_admin:$user_idx"],
+                        ]
+
+                    );
+
+                    $data_edit = [
+                        'chat_id'   => $chat_id,
+                        'text' => 'Управление пользователями и доступом',
+                        'message_id' => $msg_id,
+                        'reply_markup' => $inline_keyboard,
+                    ];
+
+                    return Request::editMessageText($data_edit);
+                }
+
+            }
+
         }
         catch(TelegramException $e)
         {

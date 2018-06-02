@@ -181,7 +181,6 @@ class WhoisCommand extends AdminCommand
         }
 
         $data['text'] = $text;
-
         return Request::sendMessage($data);
     }
 }

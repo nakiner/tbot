@@ -54,7 +54,7 @@ class Functions
      */
     public function FetchAdmins($admins = [])
     {
-        $result = $this->db->query('SELECT id FROM admins')->fetch_row();
+        $result = $this->db->query('SELECT user_id FROM admins')->fetch_row();
         if(count($result))
         {
             foreach($result as $admin)
@@ -97,6 +97,16 @@ class Functions
 
         $user_id = $update->getMessage()->getFrom()->getId();
         $username = $update->getMessage()->getFrom()->getUsername();
+
+        $ins = $this->db->query("SELECT username FROM user WHERE id = '$user_id'");
+        if($ins->num_rows < 1)
+        {
+            $who = $update->getMessage()->getFrom();
+            $first_name = $who->getFirstName();
+            $last_name = $who->getLastName();
+            $code = $who->getLanguageCode();
+            $this->db->query("INSERT INTO user VALUES('$user_id', '0', '$first_name', '$last_name', '$username', '$code', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP )");
+        }
 
         $check = $this->db->query("SELECT id FROM users_allowed WHERE user_id = '$user_id'");
         if($check->num_rows > 0)
@@ -170,14 +180,11 @@ class Functions
     public function RevokeAuth($username)
     {
         $this->db->query("DELETE FROM users_allowed WHERE username = '$username'");
-        error_log($this->db->affected_rows);
         return $this->db->affected_rows;
     }
 
     /**
      * Добавляет авторизационный токен
-     *
-     * @param string $token
      *
      * @return int
      */
@@ -198,7 +205,44 @@ class Functions
     public function RevokeToken($token)
     {
         $this->db->query("DELETE FROM users_allowed WHERE token = '$token'");
-        error_log($this->db->affected_rows);
+        return $this->db->affected_rows;
+    }
+
+    /**
+     * Добавляет администратора
+     *
+     * @param int $user_id
+     *
+     * @return int
+     */
+    public function AddAdmin($user_id)
+    {
+        $this->db->query("INSERT INTO admins (user_id) VALUES('$user_id')");
+        return $this->db->affected_rows;
+    }
+
+    /**
+     * Отображает информацию об администраторе
+     *
+     * @param int $user_id
+     *
+     * @return array
+     */
+    public function GetAdminInfo($user_id)
+    {
+        return $this->db->query("SELECT * FROM user WHERE id = '$user_id'")->fetch_assoc();
+    }
+
+    /**
+     * Удаляет администратора
+     *
+     * @param int $user_id
+     *
+     * @return int
+     */
+    public function RevokeAdmin($user_id)
+    {
+        $this->db->query("DELETE FROM admins WHERE user_id = '$user_id'");
         return $this->db->affected_rows;
     }
 }
