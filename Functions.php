@@ -9,6 +9,7 @@ class Functions
 
     /**
      * Инициализирует класс
+     *
      */
     function __construct()
     {
@@ -25,6 +26,7 @@ class Functions
 
     /**
      * Уничтожает класс
+     *
      */
     function __destruct()
     {
@@ -64,6 +66,26 @@ class Functions
             }
         }
         return $admins;
+    }
+
+    /**
+     * Возвращает список менеджеров
+     *
+     * @param array $managers
+     *
+     * @return array
+     */
+    public function FetchManagers($managers = [])
+    {
+        $result = $this->db->query('SELECT user_id FROM managers')->fetch_all();
+        if(count($result))
+        {
+            foreach($result as $line)
+            {
+                $managers[] = (int) $line[0];
+            }
+        }
+        return $managers;
     }
 
     /**
@@ -193,7 +215,7 @@ class Functions
     {
         $token = $this->GenerateString();
         $this->db->query("INSERT INTO users_allowed (token) VALUES('$token')");
-        return ($this->db->affected_rows > 0) ? $token : $this->db->affected_rows;
+        return ($this->db->affected_rows > 0) ? $token : false;
     }
 
     /**
@@ -223,13 +245,13 @@ class Functions
     }
 
     /**
-     * Отображает информацию об администраторе
+     * Отображает информацию о пользователе
      *
      * @param int $user_id
      *
      * @return array
      */
-    public function GetAdminInfo($user_id)
+    public function GetUserInfo($user_id)
     {
         return $this->db->query("SELECT * FROM user WHERE id = '$user_id'")->fetch_assoc();
     }
@@ -257,5 +279,43 @@ class Functions
     public function GetChatID($user_id)
     {
         return $this->db->query("SELECT chat_id FROM user_chat WHERE user_id = '$user_id'")->fetch_row();
+    }
+
+    /**
+     * Добавляет менеджера
+     *
+     * @param int $user_id
+     *
+     * @return int
+     */
+    public function AddManager($user_id)
+    {
+        $this->db->query("INSERT INTO managers (user_id) VALUES('$user_id')");
+        return $this->db->affected_rows;
+    }
+
+    /**
+     * Удаляет менеджера
+     *
+     * @param int $user_id
+     *
+     * @return int
+     */
+    public function RevokeManager($user_id)
+    {
+        $this->db->query("DELETE FROM managers WHERE user_id = '$user_id'");
+        return $this->db->affected_rows;
+    }
+
+    /**
+     * Проверяет, является ли пользователь менеджером
+     *
+     * @param int $user_id
+     *
+     * @return int
+     */
+    public function IsManager($user_id)
+    {
+        return (in_array($this->FetchManagers(), $user_id)) ? true : false;
     }
 }

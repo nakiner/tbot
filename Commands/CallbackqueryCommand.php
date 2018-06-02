@@ -72,6 +72,15 @@ class CallbackqueryCommand extends SystemCommand
             {
                 return $this->admin_callback($callback_query, $data[1], $data[0]);
             }
+            case 'menu_managers':
+            case 'add_managers':
+            case 'show_managers':
+            case 'info_managers':
+            case 'delete_managers':
+            case 'exit_menu_managers':
+            {
+                return $this->managers_callback($callback_query, $data[1], $data[0]);
+            }
         }
 
         return Request::answerCallbackQuery(['callback_query_id' => $callback_query->getId()]);
@@ -174,6 +183,41 @@ class CallbackqueryCommand extends SystemCommand
             }
             $cmd = new UserCommand($this->getTelegram());
             $cmd->admin_action($callback_query->getMessage(), $user_id, $action);
+
+            Request::answerCallbackQuery(['callback_query_id' => $callback_query->getId()]);
+        }
+        catch(TelegramException $e)
+        {
+            //echo $e;
+        }
+    }
+
+    /**
+     * Обработка нажатия кнопок раздела менеджеров
+     *
+     * @param \Longman\TelegramBot\Entities\CallbackQuery $callback_query
+     * @param string $user_id
+     * @param string $action
+     *
+     * @throws \Longman\TelegramBot\Exception\TelegramException
+     */
+    public function managers_callback($callback_query, $user_id, $action)
+    {
+        try
+        {
+            $chat_id = $callback_query->getFrom()->getId();
+            $msg_id = $callback_query->getMessage()->getMessageId();
+            if($action == 'add_managers')
+            {
+                $data_edit = [
+                    'chat_id'   => $chat_id,
+                    'text' => "Введите User ID пользователя, например 3892136\nДля того, чтобы узнать User ID используйте\n/whois [часть имени/ника]\nДля отмены действия отправьте /cancel",
+                    'message_id' => $msg_id
+                ];
+                Request::editMessageText($data_edit);
+            }
+            $cmd = new UserCommand($this->getTelegram());
+            $cmd->managers_action($callback_query->getMessage(), $user_id, $action);
 
             Request::answerCallbackQuery(['callback_query_id' => $callback_query->getId()]);
         }
