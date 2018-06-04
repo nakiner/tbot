@@ -268,18 +268,10 @@ class UserCommand extends AdminCommand
             {
                 case 'menu_admin':
                 {
-                    $inline_keyboard = new InlineKeyboard
-                    (
-                        [
-                            ['text' => 'Список администраторов', 'callback_data' => "show_admin:$user_idx"]
-                        ],
-                        [
-                            ['text' => 'Добавить администратора', 'callback_data' => "add_admin:$user_idx"]
-                        ],
-                        [
-                            ['text' => 'Возврат в меню', 'callback_data' => "exit_menu_admin:$user_idx"]
-                        ]
-                    );
+                    $inline_keyboard = new InlineKeyboard([]);
+                    $inline_keyboard->addRow(['text' => 'Список администраторов', 'callback_data' => "show_admin:$user_idx"]);
+                    $inline_keyboard->addRow(['text' => 'Добавить администратора', 'callback_data' => "add_admin:$user_idx"]);
+                    $inline_keyboard->addRow(['text' => 'Возврат в меню', 'callback_data' => "exit_menu_admin:$user_idx"]);
 
                     $data_edit = [
                         'chat_id'   => $chat_id,
@@ -292,7 +284,7 @@ class UserCommand extends AdminCommand
                 }
                 case 'show_admin':
                 {
-                    $inline_keyboard = new InlineKeyboard();
+                    $inline_keyboard = new InlineKeyboard([]);
                     $func = new \Functions();
                     $admins = $func->FetchAdmins();
                     foreach ($admins as $admin)
@@ -314,7 +306,7 @@ class UserCommand extends AdminCommand
                 }
                 case 'info_admin':
                 {
-                    $inline_keyboard = new InlineKeyboard();
+                    $inline_keyboard = new InlineKeyboard([]);
                     $inline_keyboard->addRow(['text' => 'Удалить', 'callback_data' => "delete_admin:$user_idx"]);
                     $inline_keyboard->addRow(['text' => 'Вернуться назад..', 'callback_data' => "show_admin:$user_idx"]);
 
@@ -366,7 +358,6 @@ class UserCommand extends AdminCommand
                                 'text' => "Вы были назначены администратором.\nСписок доступных команд /help",
                                 'chat_id' => $func->GetChatID($text)[0]
                             ];
-                            error_log($func->GetChatID($text)[0]);
                             Request::sendMessage($tell_user);
                             $data['text'] = 'Администратор добавлен';
                             $this->conversation->stop();
@@ -415,6 +406,7 @@ class UserCommand extends AdminCommand
         }
         return true;
     }
+
     /**
      * Обработка действий с менеджерами
      *
@@ -435,18 +427,10 @@ class UserCommand extends AdminCommand
             {
                 case 'menu_managers':
                 {
-                    $inline_keyboard = new InlineKeyboard
-                    (
-                        [
-                            ['text' => 'Список менеджеров', 'callback_data' => "show_managers:$user_idx"]
-                        ],
-                        [
-                            ['text' => 'Добавить менеджера', 'callback_data' => "add_managers:$user_idx"]
-                        ],
-                        [
-                            ['text' => 'Возврат в меню', 'callback_data' => "exit_menu_managers:$user_idx"]
-                        ]
-                    );
+                    $inline_keyboard = new InlineKeyboard([]);
+                    $inline_keyboard->addRow(['text' => 'Список менеджеров', 'callback_data' => "show_managers:$user_idx"]);
+                    $inline_keyboard->addRow(['text' => 'Добавить менеджера', 'callback_data' => "add_managers:$user_idx"]);
+                    $inline_keyboard->addRow(['text' => 'Возврат в меню', 'callback_data' => "exit_menu_managers:$user_idx"]);
 
                     $data_edit = [
                         'chat_id'   => $chat_id,
@@ -459,7 +443,7 @@ class UserCommand extends AdminCommand
                 }
                 case 'show_managers':
                 {
-                    $inline_keyboard = new InlineKeyboard();
+                    $inline_keyboard = new InlineKeyboard([]);
                     $func = new \Functions();
                     $managers = $func->FetchManagers();
                     foreach ($managers as $manager)
@@ -481,7 +465,7 @@ class UserCommand extends AdminCommand
                 }
                 case 'info_managers':
                 {
-                    $inline_keyboard = new InlineKeyboard();
+                    $inline_keyboard = new InlineKeyboard([]);
                     $inline_keyboard->addRow(['text' => 'Удалить', 'callback_data' => "delete_managers:$user_idx"]);
                     $inline_keyboard->addRow(['text' => 'Вернуться назад..', 'callback_data' => "show_managers:$user_idx"]);
 
@@ -522,7 +506,6 @@ class UserCommand extends AdminCommand
                                 'text' => "Вы были назначены менеджером.\nСписок доступных команд /help",
                                 'chat_id' => $func->GetChatID($text)[0]
                             ];
-                            error_log($func->GetChatID($text)[0]);
                             Request::sendMessage($tell_user);
                             $data['text'] = 'Менеджер добавлен';
                             $this->conversation->stop();

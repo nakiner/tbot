@@ -43,7 +43,6 @@ class CallbackqueryCommand extends SystemCommand
      * Метод для обработки входящих запросов
      *
      * @return \Longman\TelegramBot\Entities\ServerResponse | false
-     * @throws \Longman\TelegramBot\Exception\TelegramException
      */
 
     public function execute()
@@ -79,7 +78,17 @@ class CallbackqueryCommand extends SystemCommand
             case 'delete_managers':
             case 'exit_menu_managers':
             {
-                return $this->managers_callback($callback_query, $data[1], $data[0]);
+                return $this->manage_managers_callback($callback_query, $data[1], $data[0]);
+            }
+            case 'menu_mgr_tasks':
+            case 'add_mgr_tasks':
+            case 'active_mgr_tasks':
+            case 'old_mgr_tasks':
+            case 'add_input_mgr_tasks':
+            case 'confirm_add_mgr_tasks':
+            case 'cancel_add_mgr_tasks':
+            {
+                return $this->manager_tasks($callback_query, $data[1], $data[0]);
             }
         }
 
@@ -92,8 +101,6 @@ class CallbackqueryCommand extends SystemCommand
      * @param \Longman\TelegramBot\Entities\CallbackQuery $callback_query
      * @param string $user_id
      * @param string $action
-     *
-     * @throws \Longman\TelegramBot\Exception\TelegramException
      */
     public function user_callback($callback_query, $user_id, $action)
     {
@@ -116,6 +123,7 @@ class CallbackqueryCommand extends SystemCommand
         }
         catch(TelegramException $e)
         {
+            //throw new TelegramException($e);
             //echo $e;
         }
     }
@@ -126,8 +134,6 @@ class CallbackqueryCommand extends SystemCommand
      * @param \Longman\TelegramBot\Entities\CallbackQuery $callback_query
      * @param string $user_id
      * @param string $action
-     *
-     * @throws \Longman\TelegramBot\Exception\TelegramException
      */
     public function token_callback($callback_query, $user_id, $action)
     {
@@ -163,8 +169,6 @@ class CallbackqueryCommand extends SystemCommand
      * @param \Longman\TelegramBot\Entities\CallbackQuery $callback_query
      * @param string $user_id
      * @param string $action
-     *
-     * @throws \Longman\TelegramBot\Exception\TelegramException
      */
     public function admin_callback($callback_query, $user_id, $action)
     {
@@ -198,10 +202,8 @@ class CallbackqueryCommand extends SystemCommand
      * @param \Longman\TelegramBot\Entities\CallbackQuery $callback_query
      * @param string $user_id
      * @param string $action
-     *
-     * @throws \Longman\TelegramBot\Exception\TelegramException
      */
-    public function managers_callback($callback_query, $user_id, $action)
+    public function manage_managers_callback($callback_query, $user_id, $action)
     {
         try
         {
@@ -218,6 +220,27 @@ class CallbackqueryCommand extends SystemCommand
             }
             $cmd = new UserCommand($this->getTelegram());
             $cmd->managers_action($callback_query->getMessage(), $user_id, $action);
+
+            Request::answerCallbackQuery(['callback_query_id' => $callback_query->getId()]);
+        }
+        catch(TelegramException $e)
+        {
+            //echo $e;
+        }
+    }
+    /**
+     * Обработка кнопок, нажимаемых менеджерами
+     *
+     * @param \Longman\TelegramBot\Entities\CallbackQuery $callback_query
+     * @param string $user_id
+     * @param string $action
+     */
+    public function manager_tasks($callback_query, $user_id, $action)
+    {
+        try
+        {
+            $cmd = new ManageCommand($this->getTelegram());
+            $cmd->tasks_action($callback_query->getMessage(), $user_id, $action);
 
             Request::answerCallbackQuery(['callback_query_id' => $callback_query->getId()]);
         }

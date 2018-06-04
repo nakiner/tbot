@@ -62,10 +62,24 @@ class HelpCommand extends UserCommand
 
         // If no command parameter is passed, show the list.
         if ($command_str === '') {
-            $data['text'] = '*Список команд*:' . PHP_EOL;
+
+            //$func = new \Functions();
+            //$is_manager = $func->IsManager($message->getFrom()->getId());
+
+            $data['text'] = '*Команды*:' . PHP_EOL;
             foreach ($user_commands as $user_command) {
+                //if($user_command->private_only == 'manager') continue;
                 $data['text'] .= '/' . $user_command->getName() . ' - ' . $user_command->getDescription() . PHP_EOL;
             }
+
+//            if($is_manager)
+//            {
+//                $data['text'] = '*Команды менедждеров*:' . PHP_EOL;
+//                foreach ($user_commands as $user_command) {
+//                    if($user_command->private_only != 'manager') continue;
+//                    $data['text'] .= '/' . $user_command->getName() . ' - ' . $user_command->getDescription() . PHP_EOL;
+//                }
+//            }
 
             if ($safe_to_show && count($admin_commands) > 0) {
                 $data['text'] .= PHP_EOL . '*Команды администраторов*:' . PHP_EOL;

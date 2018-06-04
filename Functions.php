@@ -22,6 +22,8 @@ class Functions
             $config->mysql_credentials['database']
         );
         $this->db->query('SET NAMES utf8');
+        //$this->db->query("INSERT INTO tasks (task_name,task_desc,user_id,manager_id,dead_date) VALUES('Таск!', 'описание', '$user_id', '$manager_id', '$dead_date')");
+        //error_log($this->db->error);
     }
 
     /**
@@ -35,6 +37,8 @@ class Functions
 
     /**
      * Возвращает рандомную строку
+     *
+     * @param int $max
      *
      * @return string
      */
@@ -62,7 +66,6 @@ class Functions
             foreach($result as $line)
             {
                 $admins[] = (int) $line[0];
-
             }
         }
         return $admins;
@@ -209,7 +212,7 @@ class Functions
     /**
      * Добавляет авторизационный токен
      *
-     * @return int
+     * @return string | false
      */
     public function AddToken()
     {
@@ -274,7 +277,7 @@ class Functions
      *
      * @param int $user_id
      *
-     * @return int
+     * @return string
      */
     public function GetChatID($user_id)
     {
@@ -316,6 +319,79 @@ class Functions
      */
     public function IsManager($user_id)
     {
-        return (in_array($this->FetchManagers(), $user_id)) ? true : false;
+        return (in_array($user_id, $this->FetchManagers())) ? true : false;
+    }
+
+    /**
+     * Возвращает список подчиненных менеджера
+     *
+     * @param int $manager_id
+     *
+     * @return array $employees
+     */
+    public function FetchManagerEmployees($manager_id)
+    {
+        $employees = [];
+        $result = $this->db->query("SELECT user_id FROM employees WHERE manager_id = '$manager_id'")->fetch_all();
+        if(count($result))
+        {
+            foreach($result as $line)
+            {
+                $employees[] = (int) $line[0];
+            }
+        }
+        return $employees;
+    }
+
+    /**
+     * Проверяет введенную дату на валидность
+     *
+     * @param string $date
+     * @param string $format
+     *
+     * @return bool
+     */
+    function validate_timestamp($date, $format = 'Y-m-d H:i')
+    {
+        $d = DateTime::createFromFormat($format, $date);
+        return $d && $d->format($format) == $date;
+    }
+
+    /**
+     * Добавляет задачу в БД
+     *
+     * @param string $name
+     * @param string $desc
+     * @param int $user_id
+     * @param int $manager_id
+     * @param string $dead_date
+     *
+     * @return int
+     */
+    public function AddTask($name, $desc, $user_id, $manager_id, $dead_date)
+    {
+        $this->db->query("INSERT INTO tasks (task_name,task_desc,user_id,manager_id,dead_date) VALUES('$name', '$desc', '$user_id', '$manager_id', '$dead_date')");
+        return $this->db->affected_rows;
+    }
+
+    /**
+     * Добавляет задачу в БД
+     *
+     * @param int $manager_id
+     *
+     * @return array
+     */
+    public function GetManagerTasks($manager_id)
+    {
+        $tasks = [];
+        $result = $this->db->query("SELECT * FROM tasks WHERE manager_id = '$manager_id'");
+        if($result->num_rows > 0)
+        {
+            while($line = $result->fetch_assoc())
+            {
+                $tasks[] = $line;
+            }
+        }
+        return $tasks;
     }
 }
