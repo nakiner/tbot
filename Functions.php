@@ -22,8 +22,6 @@ class Functions
             $config->mysql_credentials['database']
         );
         $this->db->query('SET NAMES utf8');
-        //$this->db->query("INSERT INTO tasks (task_name,task_desc,user_id,manager_id,dead_date) VALUES('Таск!', 'описание', '$user_id', '$manager_id', '$dead_date')");
-        //error_log($this->db->error);
     }
 
     /**
@@ -490,7 +488,6 @@ class Functions
     {
         $now = new \DateTime();
         $now = $now->format("Y-m-d H:i:s");
-        error_log($now);
         $this->db->query("UPDATE tasks SET status = 0, finish_date = '$now' WHERE id = '$task_id'");
         return $this->db->affected_rows;
     }
@@ -511,4 +508,33 @@ class Functions
         return "$hours:$minutes:$seconds";
     }
 
+    /**
+     * Удаляет подчиненного
+     *
+     * @param int $manager_id
+     * @param int $user_id
+     *
+     * @return int
+     */
+    public function RevokeEmployee($manager_id, $user_id)
+    {
+        $this->db->query("DELETE FROM employees WHERE manager_id = '$manager_id' AND user_id = '$user_id' ");
+        return $this->db->affected_rows;
+    }
+
+    /**
+     * Добавляет подчиненного
+     *
+     * @param int $manager_id
+     * @param int $user_id
+     *
+     * @return int
+     */
+    public function AddEmployee($manager_id, $user_id)
+    {
+        $is_ok = $this->db->query("SELECT id FROM employees WHERE user_id = '$user_id'")->fetch_all();
+        if(count($is_ok) > 0) return 0;
+        $this->db->query("INSERT INTO employees (user_id, manager_id) VALUES ('$user_id', '$manager_id')");
+        return $this->db->affected_rows;
+    }
 }

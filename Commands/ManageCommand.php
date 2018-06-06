@@ -136,7 +136,7 @@ class ManageCommand extends UserCommand
                     {
                         $info = $func->GetUserInfo($employee);
                         $info = (strlen($info['last_name']) > 2) ? $info['first_name'].' '.$info['last_name'] : $info['first_name'];
-                        $inline_keyboard->addRow(['text' => $info, 'callback_data' => "add_input_mgr_tasks:$employee"]);
+                        $inline_keyboard->addRow(['text' => $info, 'callback_data' => "add_input_mgr_tasks:$user_idx-$employee"]);
                     }
                     $inline_keyboard->addRow(['text' => 'Возврат в меню', 'callback_data' => "menu_mgr_tasks:$user_idx"]);
 
@@ -151,6 +151,8 @@ class ManageCommand extends UserCommand
                 }
                 case 'add_input_mgr_tasks':
                 {
+                    $expo = explode('-', $user_idx);
+                    if(count($expo) == 2) $user_idx = $expo[0];
                     $user_id = ($user_idx) ? $user_idx : $message->getFrom()->getId();
                     $text = trim($message->getText(true));
 
@@ -165,7 +167,7 @@ class ManageCommand extends UserCommand
                     if(!isset($notes['awaiting_reply']))
                     {
                         $notes['awaiting_reply'] = $action;
-                        $notes['task_employee'] = $user_id;
+                        $notes['task_employee'] = $expo[1];
                         $notes['stage'] = 0;
                         $this->conversation->update();
 
@@ -334,7 +336,6 @@ class ManageCommand extends UserCommand
                     $task_employee = $func->GetUserInfo($task['user_id']);
                     $task_employee = (strlen($task_employee['last_name']) > 1) ? $task_employee['first_name'].' '.$task_employee['last_name'] : $task_employee['first_name'];
                     $task_deadline = $task['dead_date'];
-                    $task_finish = (strlen($task['finish_date']) > 0) ? $task['finish_date'] : "Нет";
                     $task_time = $func->MakeTime($task['total_time']);
 
                     $data_edit['text'] .= "Название задачи: $task_name\n";

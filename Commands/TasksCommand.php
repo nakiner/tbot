@@ -67,43 +67,20 @@ class TasksCommand extends UserCommand
      */
     public function execute()
     {
-        $func = new \Functions();
-
         $chat_id = $this->getMessage()->getChat()->getId();
         $user_id = $this->getMessage()->getFrom()->getId();
 
-        $this->conversation = new Conversation($user_id, $chat_id);
+        $inline_keyboard = new InlineKeyboard([]);
+        $inline_keyboard->addRow(['text' => 'Активные задачи', 'callback_data' => "active_user_tasks:$user_id"]);
+        $inline_keyboard->addRow(['text' => 'Завершенные задачи', 'callback_data' => "old_user_tasks:$user_id"]);
 
-        if(isset($this->conversation->notes['awaiting_reply']))
-        {
-            switch($this->conversation->notes['awaiting_reply'])
-            {
-                case 'add_input_mgr_tasks':
-                case 'add_file_mgr_tasks':
-                {
-                    return $this->user_tasks_action($this->getMessage(), null, $this->conversation->notes['awaiting_reply']);
-                }
-                default:
-                {
-                    return false;
-                }
-            }
+        $data = [
+            'chat_id'   => $chat_id,
+            'reply_markup' => $inline_keyboard,
+            'text' => 'Управление задачами'
+        ];
 
-        }
-        else
-        {
-            $inline_keyboard = new InlineKeyboard([]);
-            $inline_keyboard->addRow(['text' => 'Активные задачи', 'callback_data' => "active_user_tasks:$user_id"]);
-            $inline_keyboard->addRow(['text' => 'Завершенные задачи', 'callback_data' => "old_user_tasks:$user_id"]);
-
-            $data = [
-                'chat_id'   => $chat_id,
-                'reply_markup' => $inline_keyboard,
-                'text' => 'Управление задачами'
-            ];
-
-            return Request::sendMessage($data);
-        }
+        return Request::sendMessage($data);
     }
 
     /**
@@ -372,14 +349,14 @@ class TasksCommand extends UserCommand
                     $task_name = $task['task_name'];
                     $task_desc = $task['task_desc'];
                     $task_manager = $func->GetUserInfo($task['manager_id']);
-                    $task_employee = (strlen($task_manager['last_name']) > 1) ? $task_manager['first_name'].' '.$task_manager['last_name'] : $task_manager['first_name'];
+                    $task_manager = (strlen($task_manager['last_name']) > 1) ? $task_manager['first_name'].' '.$task_manager['last_name'] : $task_manager['first_name'];
                     $task_deadline = $task['dead_date'];
                     $task_finish = (strlen($task['finish_date']) > 0) ? $task['finish_date'] : "Нет";
                     $task_time = $func->MakeTime($task['total_time']);
 
                     $data_edit['text'] .= "Название задачи: $task_name\n";
                     $data_edit['text'] .= "Описание задачи: $task_desc\n";
-                    $data_edit['text'] .= "Менеджер: $task_employee\n";
+                    $data_edit['text'] .= "Менеджер: $task_manager\n";
                     $data_edit['text'] .= "Финальный срок: $task_deadline\n";
                     $data_edit['text'] .= "Завершена: $task_finish\n";
                     $data_edit['text'] .= "Затраченное время: $task_time\n";

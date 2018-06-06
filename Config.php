@@ -73,7 +73,8 @@ class Config
         ];
 
         $this->manager_commands = [
-            'manage'
+            'manage',
+            'employees'
         ];
 
         $this->commands_paths = [
