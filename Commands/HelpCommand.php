@@ -12,12 +12,13 @@ namespace Longman\TelegramBot\Commands\UserCommands;
 
 use Longman\TelegramBot\Commands\Command;
 use Longman\TelegramBot\Commands\UserCommand;
+use Longman\TelegramBot\Exception\TelegramException;
 use Longman\TelegramBot\Request;
 
 /**
- * User "/help" command
+ * Пользовательская команда "/help"
  *
- * Command that lists all available commands and displays them in User and Admin sections.
+ * Команда, которая осуществляет вывод всех команд из всех секций с учет прав доступа.
  */
 class HelpCommand extends UserCommand
 {
@@ -29,7 +30,7 @@ class HelpCommand extends UserCommand
     /**
      * @var string
      */
-    protected $description = 'Show bot commands help';
+    protected $description = 'Вывод доступных команд бота';
 
     /**
      * @var string
@@ -39,7 +40,7 @@ class HelpCommand extends UserCommand
     /**
      * @var string
      */
-    protected $version = '1.3.0';
+    protected $version = '1.0.0';
 
     /**
      * @inheritdoc
@@ -50,7 +51,6 @@ class HelpCommand extends UserCommand
         $chat_id     = $message->getChat()->getId();
         $command_str = trim($message->getText(true));
 
-        // Admin commands shouldn't be shown in group chats
         $safe_to_show = $message->getChat()->isPrivateChat();
 
         $data = [
@@ -60,26 +60,28 @@ class HelpCommand extends UserCommand
 
         list($all_commands, $user_commands, $admin_commands) = $this->getUserAdminCommands();
 
-        // If no command parameter is passed, show the list.
-        if ($command_str === '') {
+        if ($command_str === '')
+        {
 
-            //$func = new \Functions();
-            //$is_manager = $func->IsManager($message->getFrom()->getId());
+            $func = new \Functions();
+            $config = new \Config();
+            $is_manager = $func->IsManager($message->getFrom()->getId());
 
-            $data['text'] = '*Команды*:' . PHP_EOL;
-            foreach ($user_commands as $user_command) {
-                //if($user_command->private_only == 'manager') continue;
+            $data['text'] = '*Команды пользователей*:' . PHP_EOL;
+            foreach ($user_commands as $user_command)
+            {
+                if(in_array($user_command->getName(), $config->manager_commands)) continue;
                 $data['text'] .= '/' . $user_command->getName() . ' - ' . $user_command->getDescription() . PHP_EOL;
             }
 
-//            if($is_manager)
-//            {
-//                $data['text'] = '*Команды менедждеров*:' . PHP_EOL;
-//                foreach ($user_commands as $user_command) {
-//                    if($user_command->private_only != 'manager') continue;
-//                    $data['text'] .= '/' . $user_command->getName() . ' - ' . $user_command->getDescription() . PHP_EOL;
-//                }
-//            }
+            if($is_manager)
+            {
+                $data['text'] .= PHP_EOL . '*Команды менеджеров*:' . PHP_EOL;
+                foreach ($user_commands as $user_command) {
+                    if(!in_array($user_command->getName(), $config->manager_commands)) continue;
+                    $data['text'] .= '/' . $user_command->getName() . ' - ' . $user_command->getDescription() . PHP_EOL;
+                }
+            }
 
             if ($safe_to_show && count($admin_commands) > 0) {
                 $data['text'] .= PHP_EOL . '*Команды администраторов*:' . PHP_EOL;
@@ -115,8 +117,9 @@ class HelpCommand extends UserCommand
     }
 
     /**
-     * Get all available User and Admin commands to display in the help list.
+     * Получить список команд
      *
+     * @throws TelegramException
      * @return Command[][]
      */
     protected function getUserAdminCommands()

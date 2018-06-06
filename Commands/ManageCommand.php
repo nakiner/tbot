@@ -8,9 +8,8 @@
  * file that was distributed with this source code.
  */
 
-namespace Longman\TelegramBot\Commands\SystemCommands;
+namespace Longman\TelegramBot\Commands\UserCommands;
 
-use Longman\TelegramBot\Commands\SystemCommand;
 use Longman\TelegramBot\Commands\UserCommand;
 use Longman\TelegramBot\Request;
 use Longman\TelegramBot\Exception\TelegramException;
@@ -18,9 +17,7 @@ use Longman\TelegramBot\Entities\InlineKeyboard;
 use Longman\TelegramBot\Conversation;
 
 /**
- * Manage command
- *
- * Gets executed when a user first starts using the bot.
+ * Команда менеджера "/manage"
  */
 class ManageCommand extends UserCommand
 {
@@ -42,7 +39,7 @@ class ManageCommand extends UserCommand
     /**
      * @var string
      */
-    protected $version = '0.0.1';
+    protected $version = '0.1.1';
 
     /**
      * @var string
@@ -50,7 +47,7 @@ class ManageCommand extends UserCommand
     protected $private_only = true;
 
     /**
-     * Conversation Object
+     * Объект диалога
      *
      * @var \Longman\TelegramBot\Conversation
      */
@@ -62,15 +59,20 @@ class ManageCommand extends UserCommand
     protected $need_mysql = true;
 
     /**
-     * Command execute method
+     * Запуск команды и обработка уже запущенных процедур
+     * обработки входящих параметров
      *
      * @return \Longman\TelegramBot\Entities\ServerResponse | bool
      * @throws \Longman\TelegramBot\Exception\TelegramException
      */
     public function execute()
     {
+        $func = new \Functions();
+
         $chat_id = $this->getMessage()->getChat()->getId();
         $user_id = $this->getMessage()->getFrom()->getId();
+
+        if(!$func->IsManager($user_id)) return false;
 
         $this->conversation = new Conversation($user_id, $chat_id);
 
@@ -160,7 +162,7 @@ class ManageCommand extends UserCommand
                         'chat_id'   => $chat_id,
                     ];
 
-                    if(!isset($notes['awaiting_reply'])) // первый вызов с ID исполнителя
+                    if(!isset($notes['awaiting_reply']))
                     {
                         $notes['awaiting_reply'] = $action;
                         $notes['task_employee'] = $user_id;
@@ -308,7 +310,10 @@ class ManageCommand extends UserCommand
                 }
                 case 'single_task_mgr_tasks':
                 {
-                    $spec_id = explode('-', $user_idx)[0];
+                    $exp = explode('-', $user_idx);
+                    $spec_id = $exp[0];
+                    $task_id = $exp[1];
+
                     $inline_keyboard = new InlineKeyboard([]);
                     $inline_keyboard->addRow(['text' => 'Прикрепить файлы', 'callback_data' => "add_file_mgr_tasks:$user_idx"]);
                     $inline_keyboard->addRow(['text' => 'Закрыть задачу', 'callback_data' => "close_mgr_tasks:$user_idx"]);
@@ -316,10 +321,27 @@ class ManageCommand extends UserCommand
 
                     $data_edit = [
                         'chat_id'   => $chat_id,
-                        'text' => 'Редактирование задачи',
+                        'text' => "Редактирование задачи\n",
                         'message_id' => $msg_id,
                         'reply_markup' => $inline_keyboard,
                     ];
+
+                    $func = new \Functions();
+                    $task = $func->GetTaskInfo($task_id);
+
+                    $task_name = $task['task_name'];
+                    $task_desc = $task['task_desc'];
+                    $task_employee = $func->GetUserInfo($task['user_id']);
+                    $task_employee = (strlen($task_employee['last_name']) > 1) ? $task_employee['first_name'].' '.$task_employee['last_name'] : $task_employee['first_name'];
+                    $task_deadline = $task['dead_date'];
+                    $task_finish = (strlen($task['finish_date']) > 0) ? $task['finish_date'] : "Нет";
+                    $task_time = $func->MakeTime($task['total_time']);
+
+                    $data_edit['text'] .= "Название задачи: $task_name\n";
+                    $data_edit['text'] .= "Описание задачи: $task_desc\n";
+                    $data_edit['text'] .= "Исполнитель: $task_employee\n";
+                    $data_edit['text'] .= "Финальный срок: $task_deadline\n";
+                    $data_edit['text'] .= "Затраченное время: $task_time\n";
 
                     return Request::editMessageText($data_edit);
                 }
@@ -362,11 +384,6 @@ class ManageCommand extends UserCommand
                             if($func->SetTaskFile($notes['task_id'], $path))
                             {
                                 $data['text'] = 'Файл успешно прикреплен к задаче.';
-//                                $send_doc = [
-//                                    'chat_id' => $chat_id,
-//                                    'document'   => Request::encodeFile($path),
-//                                ];
-//                                Request::sendDocument($send_doc);
                                 $task = $func->GetTaskInfo($notes['task_id']);
                                 $task_name = $task['task_name'];
                                 $notify = [
@@ -402,7 +419,7 @@ class ManageCommand extends UserCommand
                         $task_name = $task['task_name'];
 
                         $notify = [
-                            'chat_id' => $task['user_id'],
+                            'chat_id' => $func->GetChatID($task['user_id'])[0],
                             'text' => "Задача '$task_name' закрыта менеджером."
                         ];
 
@@ -454,24 +471,21 @@ class ManageCommand extends UserCommand
                     $task = $func->GetTaskInfo($task_id);
 
                     $task_name = $task['task_name'];
-                    $task_desc = $task['desc'];
+                    $task_desc = $task['task_desc'];
                     $task_employee = $func->GetUserInfo($task['user_id']);
                     $task_employee = (strlen($task_employee['last_name']) > 1) ? $task_employee['first_name'].' '.$task_employee['last_name'] : $task_employee['first_name'];
                     $task_deadline = $task['dead_date'];
                     $task_finish = (strlen($task['finish_date']) > 0) ? $task['finish_date'] : "Нет";
                     $task_time = $func->MakeTime($task['total_time']);
-                    //$task_time = (strlen($task_time) > 1) ? "Нет" : $task_time;
-
 
                     $data_edit['text'] .= "Название задачи: $task_name\n";
-                    $data_edit['text'] .= "Описание задачи: $task_name\n";
+                    $data_edit['text'] .= "Описание задачи: $task_desc\n";
                     $data_edit['text'] .= "Исполнитель: $task_employee\n";
                     $data_edit['text'] .= "Финальный срок: $task_deadline\n";
                     $data_edit['text'] .= "Завершена: $task_finish\n";
                     $data_edit['text'] .= "Затраченное время: $task_time\n";
 
                     return Request::editMessageText($data_edit);
-
                 }
                 case 'menu_mgr_tasks':
                 {

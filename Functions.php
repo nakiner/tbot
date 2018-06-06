@@ -398,6 +398,29 @@ class Functions
     }
 
     /**
+     * Возвращает список заданий, поставленных менеджером
+     *
+     * @param int $user_id
+     * @param bool $active
+     *
+     * @return array
+     */
+    public function GetUserTasks($user_id, $active = true)
+    {
+        $tasks = [];
+        $status = ($active) ? 1 : 0;
+        $result = $this->db->query("SELECT * FROM tasks WHERE user_id = '$user_id' AND status = '$status'");
+        if($result->num_rows > 0)
+        {
+            while($line = $result->fetch_assoc())
+            {
+                $tasks[] = $line;
+            }
+        }
+        return $tasks;
+    }
+
+    /**
      * Возвращает ID файла, прикрепленного к задаче
      *
      * @param int $task_id
@@ -424,6 +447,27 @@ class Functions
     }
 
     /**
+     * Устанавливает новый ID файла задачи
+     *
+     * @param int $task_id
+     * @param int $time
+     * @param bool $total
+     *
+     * @return int
+     */
+    public function SetTaskTime($task_id, $time = 0)
+    {
+        if($time == 0)
+        {
+            $start_time = $this->GetTaskInfo($task_id);
+            $new_total = time() - $start_time['start_time'];
+            $this->db->query("UPDATE tasks SET total_time = total_time + '$new_total' WHERE id = '$task_id'");
+        }
+        $this->db->query("UPDATE tasks SET start_time = '$time' WHERE id = '$task_id'");
+        return $this->db->affected_rows;
+    }
+
+    /**
      * Возвращает информацию о задаче
      *
      * @param int $task_id
@@ -444,7 +488,10 @@ class Functions
      */
     public function CloseTask($task_id)
     {
-        $this->db->query("UPDATE tasks SET status = 0 WHERE id = '$task_id'");
+        $now = new \DateTime();
+        $now = $now->format("Y-m-d H:i:s");
+        error_log($now);
+        $this->db->query("UPDATE tasks SET status = 0, finish_date = '$now' WHERE id = '$task_id'");
         return $this->db->affected_rows;
     }
 

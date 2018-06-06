@@ -51,6 +51,13 @@ class Config
      */
     public $config_vars;
 
+    /**
+     * Массив для хранения команд менеджеров
+     *
+     * @var array
+     */
+    public $manager_commands;
+
     function __construct()
     {
         $this->read_config();
@@ -63,6 +70,10 @@ class Config
             'user'     => $this->config_vars['db_user'],
             'password' => $this->config_vars['db_password'],
             'database' => $this->config_vars['db_name'],
+        ];
+
+        $this->manager_commands = [
+            'manage'
         ];
 
         $this->commands_paths = [

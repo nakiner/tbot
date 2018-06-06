@@ -12,6 +12,8 @@ namespace Longman\TelegramBot\Commands\SystemCommands;
 
 use Longman\TelegramBot\Commands\AdminCommands\UserCommand;
 use Longman\TelegramBot\Commands\SystemCommand;
+use Longman\TelegramBot\Commands\UserCommands\ManageCommand;
+use Longman\TelegramBot\Commands\UserCommands\TasksCommand;
 use Longman\TelegramBot\Exception\TelegramException;
 use Longman\TelegramBot\Request;
 
@@ -55,11 +57,13 @@ class CallbackqueryCommand extends SystemCommand
             case 'add_user':
             case 'delete_user':
             {
+                if(!$this->getTelegram()->isAdmin()) return false;
                 return $this->user_callback($callback_query, $data[1], $data[0]);
             }
             case 'add_token':
             case 'delete_token':
             {
+                if(!$this->getTelegram()->isAdmin()) return false;
                 return $this->token_callback($callback_query, $data[1], $data[0]);
             }
             case 'menu_admin':
@@ -69,6 +73,7 @@ class CallbackqueryCommand extends SystemCommand
             case 'add_admin':
             case 'exit_menu_admin':
             {
+                if(!$this->getTelegram()->isAdmin()) return false;
                 return $this->admin_callback($callback_query, $data[1], $data[0]);
             }
             case 'menu_managers':
@@ -78,6 +83,7 @@ class CallbackqueryCommand extends SystemCommand
             case 'delete_managers':
             case 'exit_menu_managers':
             {
+                if(!$this->getTelegram()->isAdmin()) return false;
                 return $this->manage_managers_callback($callback_query, $data[1], $data[0]);
             }
             case 'menu_mgr_tasks':
@@ -92,7 +98,21 @@ class CallbackqueryCommand extends SystemCommand
             case 'close_mgr_tasks':
             case 'single_old_task_mgr_tasks':
             {
+                $func = new \Functions();
+                if(!$func->IsManager($data[1])) return false;
                 return $this->manager_tasks($callback_query, $data[1], $data[0]);
+            }
+            case 'menu_user_tasks':
+            case 'active_user_tasks':
+            case 'single_task_user_tasks':
+            case 'start_task_user_tasks':
+            case 'pause_task_user_tasks':
+            case 'files_task_user_tasks':
+            case 'close_task_user_tasks':
+            case 'old_user_tasks':
+            case 'single_old_task_user_tasks':
+            {
+                return $this->user_tasks($callback_query, $data[1], $data[0]);
             }
         }
 
@@ -232,12 +252,14 @@ class CallbackqueryCommand extends SystemCommand
             //echo $e;
         }
     }
+
     /**
      * Обработка кнопок, нажимаемых менеджерами
      *
      * @param \Longman\TelegramBot\Entities\CallbackQuery $callback_query
      * @param string $user_id
      * @param string $action
+     *
      */
     public function manager_tasks($callback_query, $user_id, $action)
     {
@@ -245,7 +267,28 @@ class CallbackqueryCommand extends SystemCommand
         {
             $cmd = new ManageCommand($this->getTelegram());
             $cmd->tasks_action($callback_query->getMessage(), $user_id, $action);
+            Request::answerCallbackQuery(['callback_query_id' => $callback_query->getId()]);
+        }
+        catch(TelegramException $e)
+        {
+            //echo $e;
+        }
+    }
 
+    /**
+     * Обработка кнопок, нажимаемых пользователями
+     *
+     * @param \Longman\TelegramBot\Entities\CallbackQuery $callback_query
+     * @param string $user_id
+     * @param string $action
+     *
+     */
+    public function user_tasks($callback_query, $user_id, $action)
+    {
+        try
+        {
+            $cmd = new TasksCommand($this->getTelegram());
+            $cmd->user_tasks_action($callback_query->getMessage(), $user_id, $action);
             Request::answerCallbackQuery(['callback_query_id' => $callback_query->getId()]);
         }
         catch(TelegramException $e)

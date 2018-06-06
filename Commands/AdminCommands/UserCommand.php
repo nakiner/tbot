@@ -19,7 +19,7 @@ use Longman\TelegramBot\Entities\InlineKeyboard;
 use Longman\TelegramBot\Conversation;
 
 /**
- * Admin "/user" command
+ * Команда администратора "/user"
  */
 class UserCommand extends AdminCommand
 {
@@ -41,7 +41,7 @@ class UserCommand extends AdminCommand
     /**
      * @var string
      */
-    protected $version = '1.3.0';
+    protected $version = '0.1.1';
 
     /**
      * @var bool
@@ -49,11 +49,16 @@ class UserCommand extends AdminCommand
     protected $need_mysql = true;
 
     /**
-     * Conversation Object
+     * Объект диалога
      *
      * @var \Longman\TelegramBot\Conversation
      */
     protected $conversation;
+
+    /**
+     * @var string
+     */
+    protected $private_only = true;
 
     /**
      * Запуск команды и обработка уже запущенных процедур
