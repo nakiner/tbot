@@ -375,16 +375,18 @@ class Functions
     }
 
     /**
-     * Добавляет задачу в БД
+     * Возвращает список заданий, поставленных менеджером
      *
      * @param int $manager_id
+     * @param bool $active
      *
      * @return array
      */
-    public function GetManagerTasks($manager_id)
+    public function GetManagerTasks($manager_id, $active = true)
     {
         $tasks = [];
-        $result = $this->db->query("SELECT * FROM tasks WHERE manager_id = '$manager_id'");
+        $status = ($active) ? 1 : 0;
+        $result = $this->db->query("SELECT * FROM tasks WHERE manager_id = '$manager_id' AND status = '$status'");
         if($result->num_rows > 0)
         {
             while($line = $result->fetch_assoc())
@@ -394,4 +396,72 @@ class Functions
         }
         return $tasks;
     }
+
+    /**
+     * Возвращает ID файла, прикрепленного к задаче
+     *
+     * @param int $task_id
+     *
+     * @return int
+     */
+    public function GetTaskFile($task_id)
+    {
+        return $this->db->query("SELECT files FROM tasks WHERE id = '$task_id'")->fetch_assoc()['files'];
+    }
+
+    /**
+     * Устанавливает новый ID файла задачи
+     *
+     * @param int $task_id
+     * @param int $file_id
+     *
+     * @return int
+     */
+    public function SetTaskFile($task_id, $file_id)
+    {
+        $this->db->query("UPDATE tasks SET files = '$file_id' WHERE id = '$task_id'");
+        return $this->db->affected_rows;
+    }
+
+    /**
+     * Возвращает информацию о задаче
+     *
+     * @param int $task_id
+     *
+     * @return array
+     */
+    public function GetTaskInfo($task_id)
+    {
+        return $this->db->query("SELECT * FROM tasks WHERE id = '$task_id'")->fetch_assoc();
+    }
+
+    /**
+     * Закрывает задачу
+     *
+     * @param int $task_id
+     *
+     * @return int
+     */
+    public function CloseTask($task_id)
+    {
+        $this->db->query("UPDATE tasks SET status = 0 WHERE id = '$task_id'");
+        return $this->db->affected_rows;
+    }
+
+    /**
+     * Возвращает время, полученное из секунд
+     *
+     * @param int $value
+     *
+     * @return string
+     */
+    public function MakeTime($value)
+    {
+        $seconds = intval($value%60);
+        $total_minutes = intval($value/60);
+        $minutes = $total_minutes%60;
+        $hours = intval($total_minutes/60);
+        return "$hours:$minutes:$seconds";
+    }
+
 }

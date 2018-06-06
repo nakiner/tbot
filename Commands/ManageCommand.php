@@ -79,6 +79,7 @@ class ManageCommand extends UserCommand
             switch($this->conversation->notes['awaiting_reply'])
             {
                 case 'add_input_mgr_tasks':
+                case 'add_file_mgr_tasks':
                 {
                     return $this->tasks_action($this->getMessage(), null, $this->conversation->notes['awaiting_reply']);
                 }
@@ -296,7 +297,8 @@ class ManageCommand extends UserCommand
 
                     foreach ($tasks as $task)
                     {
-                        $inline_keyboard->addRow(['text' => $task['task_name'], 'callback_data' => "single_task_mgr_tasks:$user_idx"]);
+                        $idx = $task['id'];
+                        $inline_keyboard->addRow(['text' => $task['task_name'], 'callback_data' => "single_task_mgr_tasks:$user_idx-$idx"]);
                     }
 
                     $inline_keyboard->addRow(['text' => 'Возврат в меню', 'callback_data' => "menu_mgr_tasks:$user_idx"]);
@@ -304,8 +306,171 @@ class ManageCommand extends UserCommand
 
                     return Request::editMessageText($data_edit);
                 }
+                case 'single_task_mgr_tasks':
+                {
+                    $spec_id = explode('-', $user_idx)[0];
+                    $inline_keyboard = new InlineKeyboard([]);
+                    $inline_keyboard->addRow(['text' => 'Прикрепить файлы', 'callback_data' => "add_file_mgr_tasks:$user_idx"]);
+                    $inline_keyboard->addRow(['text' => 'Закрыть задачу', 'callback_data' => "close_mgr_tasks:$user_idx"]);
+                    $inline_keyboard->addRow(['text' => 'Вернуться назад..', 'callback_data' => "active_mgr_tasks:$spec_id"]);
+
+                    $data_edit = [
+                        'chat_id'   => $chat_id,
+                        'text' => 'Редактирование задачи',
+                        'message_id' => $msg_id,
+                        'reply_markup' => $inline_keyboard,
+                    ];
+
+                    return Request::editMessageText($data_edit);
+                }
+                case 'add_file_mgr_tasks':
+                {
+                    $exp = explode('-', $user_idx);
+                    $user_id = ($user_idx) ? $exp[0] : $message->getFrom()->getId();
+                    $this->conversation = new Conversation($user_id, $chat_id, $this->getName());
+                    $notes = &$this->conversation->notes;
+                    !is_array($notes) && $notes = [];
+
+                    $data = [
+                        'chat_id'   => $chat_id,
+                    ];
+
+                    if(!isset($notes['awaiting_reply']))
+                    {
+                        $notes['awaiting_reply'] = $action;
+                        $notes['task_id'] = $exp[1];
+                        $this->conversation->update();
+
+                        $data_edit = [
+                            'chat_id'   => $chat_id,
+                            'text' => "Загрузите архив с файлами\nЕсли у задачи уже есть архив, он будет перезаписан\nДля отмены действия отправьте /cancel",
+                            'message_id' => $msg_id
+                        ];
+                        return Request::editMessageText($data_edit);
+                    }
+                    $message_type = $message->getType();
+                    if ($message_type == 'document')
+                    {
+                        $doc = $message->getDocument();
+
+                        $file_id = $doc->getFileId();
+                        $file = Request::getFile(['file_id' => $file_id]);
+                        if ($file->isOk() && Request::downloadFile($file->getResult()))
+                        {
+                            $func = new \Functions();
+                            $path = $this->telegram->getDownloadPath() . '/' . $file->getResult()->getFilePath();
+                            if($func->SetTaskFile($notes['task_id'], $path))
+                            {
+                                $data['text'] = 'Файл успешно прикреплен к задаче.';
+//                                $send_doc = [
+//                                    'chat_id' => $chat_id,
+//                                    'document'   => Request::encodeFile($path),
+//                                ];
+//                                Request::sendDocument($send_doc);
+                                $task = $func->GetTaskInfo($notes['task_id']);
+                                $task_name = $task['task_name'];
+                                $notify = [
+                                    'chat_id' => $task['user_id'],
+                                    'text' => "К Вашей задаче '$task_name' был прикреплен файл!\nЧтобы скачать файл, используйте /tasks"
+                                ];
+                                Request::sendMessage($notify);
+                                $this->conversation->stop();
+                            }
+                            else $data['text'] = 'Ошибка изменения файла у задачи, попробуйте снова.';
+                        }
+                        else $data['text'] = 'Ошибка загрузки файла, попробуйте снова.';
+                    }
+                    else $data['text'] = 'Неверный тип файла. Фотографии, видео и голосовые сообщения не поддерживаются.';
+
+                    return Request::sendMessage($data);
+                }
+                case 'close_mgr_tasks':
+                {
+                    $exp = explode('-', $user_idx);
+
+                    $data_edit = [
+                        'chat_id'   => $chat_id,
+                        'message_id' => $msg_id
+                    ];
+
+                    $func = new \Functions();
+                    if($func->CloseTask($exp[1]))
+                    {
+                        $data_edit['text'] = 'Задача успешно закрыта!';
+
+                        $task = $func->GetTaskInfo($exp[1]);
+                        $task_name = $task['task_name'];
+
+                        $notify = [
+                            'chat_id' => $task['user_id'],
+                            'text' => "Задача '$task_name' закрыта менеджером."
+                        ];
+
+                        Request::sendMessage($notify);
+                    }
+                    else $data_edit['text'] = 'Произошла ошибка при закрытии задачи!';
+
+                    return Request::editMessageText($data_edit);
+                }
                 case 'old_mgr_tasks':
                 {
+                    $inline_keyboard = new InlineKeyboard([]);
+                    $data_edit = [
+                        'chat_id' => $chat_id,
+                        'text' => 'Просмотр завершенных задач',
+                        'message_id' => $msg_id
+                    ];
+
+                    $func = new \Functions();
+                    $tasks = $func->GetManagerTasks($user_idx, false);
+
+                    foreach ($tasks as $task)
+                    {
+                        $idx = $task['id'];
+                        $inline_keyboard->addRow(['text' => $task['task_name'], 'callback_data' => "single_old_task_mgr_tasks:$user_idx-$idx"]);
+                    }
+
+                    $inline_keyboard->addRow(['text' => 'Возврат в меню', 'callback_data' => "menu_mgr_tasks:$user_idx"]);
+                    $data_edit['reply_markup'] = $inline_keyboard;
+
+                    return Request::editMessageText($data_edit);
+                }
+                case 'single_old_task_mgr_tasks':
+                {
+                    $exp = explode('-', $user_idx);
+                    $user_id = $exp[0];
+                    $task_id = $exp[1];
+
+                    $inline_keyboard = new InlineKeyboard([]);
+                    $inline_keyboard->addRow(['text' => 'Вернуться назад..', 'callback_data' => "old_mgr_tasks:$user_id"]);
+                    $data_edit = [
+                        'chat_id' => $chat_id,
+                        'message_id' => $msg_id,
+                        'text' => "Просмотр задачи\n",
+                        'reply_markup' => $inline_keyboard
+                    ];
+
+                    $func = new \Functions();
+                    $task = $func->GetTaskInfo($task_id);
+
+                    $task_name = $task['task_name'];
+                    $task_desc = $task['desc'];
+                    $task_employee = $func->GetUserInfo($task['user_id']);
+                    $task_employee = (strlen($task_employee['last_name']) > 1) ? $task_employee['first_name'].' '.$task_employee['last_name'] : $task_employee['first_name'];
+                    $task_deadline = $task['dead_date'];
+                    $task_finish = (strlen($task['finish_date']) > 0) ? $task['finish_date'] : "Нет";
+                    $task_time = $func->MakeTime($task['total_time']);
+                    //$task_time = (strlen($task_time) > 1) ? "Нет" : $task_time;
+
+
+                    $data_edit['text'] .= "Название задачи: $task_name\n";
+                    $data_edit['text'] .= "Описание задачи: $task_name\n";
+                    $data_edit['text'] .= "Исполнитель: $task_employee\n";
+                    $data_edit['text'] .= "Финальный срок: $task_deadline\n";
+                    $data_edit['text'] .= "Завершена: $task_finish\n";
+                    $data_edit['text'] .= "Затраченное время: $task_time\n";
+
+                    return Request::editMessageText($data_edit);
 
                 }
                 case 'menu_mgr_tasks':

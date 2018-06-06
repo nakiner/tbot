@@ -87,6 +87,10 @@ class CallbackqueryCommand extends SystemCommand
             case 'add_input_mgr_tasks':
             case 'confirm_add_mgr_tasks':
             case 'cancel_add_mgr_tasks':
+            case 'single_task_mgr_tasks':
+            case 'add_file_mgr_tasks':
+            case 'close_mgr_tasks':
+            case 'single_old_task_mgr_tasks':
             {
                 return $this->manager_tasks($callback_query, $data[1], $data[0]);
             }
