@@ -7,27 +7,22 @@
 
 // Load composer
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/Config.php';
 
-// Add you bot's API key and name
-$bot_api_key  = '593338735:AAF1WEUsGaQVDJ2nVKsrTUYq9OafvvT--RE';
-$bot_username = 'flooterbot';
+$config = new Config();
 
-// Define the URL to your hook.php file
-$hook_url     = 'https://bot.boton.app/hook/';
+try
+{
+    $telegram = new Longman\TelegramBot\Telegram($config->bot_api_key, $config->bot_username);
+    $result = $telegram->setWebhook($config->url);
 
-try {
-    // Create Telegram API object
-    $telegram = new Longman\TelegramBot\Telegram($bot_api_key, $bot_username);
+    // Для самоподписанных сертификатов
+    //$certificate_path = '/path/to/cert.crt';
+    //$result = $telegram->setWebhook($config->url, ['certificate' => $certificate_path]);
 
-    // Set webhook
-    $result = $telegram->setWebhook($hook_url);
-
-    // To use a self-signed certificate, use this line instead
-    //$result = $telegram->setWebhook($hook_url, ['certificate' => $certificate_path]);
-
-    if ($result->isOk()) {
-        echo $result->getDescription();
-    }
-} catch (Longman\TelegramBot\Exception\TelegramException $e) {
+    if ($result->isOk()) echo $result->getDescription();
+}
+catch (Longman\TelegramBot\Exception\TelegramException $e)
+{
     echo $e->getMessage();
 }

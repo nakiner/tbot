@@ -7,21 +7,18 @@
 
 // Load composer
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/Config.php';
 
-// Add you bot's API key and name
-$bot_api_key  = 'your:bot_api_key';
-$bot_username = 'username_bot';
+$config = new Config();
 
-try {
-    // Create Telegram API object
-    $telegram = new Longman\TelegramBot\Telegram($bot_api_key, $bot_username);
+try
+{
+    $telegram = new Longman\TelegramBot\Telegram($config->bot_api_key, $config->bot_username);
 
-    // Delete webhook
     $result = $telegram->deleteWebhook();
-
-    if ($result->isOk()) {
-        echo $result->getDescription();
-    }
-} catch (Longman\TelegramBot\Exception\TelegramException $e) {
+    if ($result->isOk()) echo $result->getDescription();
+}
+catch (Longman\TelegramBot\Exception\TelegramException $e)
+{
     echo $e->getMessage();
 }

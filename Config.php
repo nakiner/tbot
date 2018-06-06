@@ -45,6 +45,13 @@ class Config
     public $upload_path;
 
     /**
+     * Путь для WebHook'a
+     *
+     * @var string
+     */
+    public $url;
+
+    /**
      * Массив для данных из файла
      *
      * @var array
@@ -83,6 +90,7 @@ class Config
 
         $this->download_path = __DIR__.$this->config_vars['download_path'];
         $this->upload_path = __DIR__.$this->config_vars['upload_path'];
+        $this->url = $this->config_vars['bot_url'];
     }
 
     /**
