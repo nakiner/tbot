@@ -27,7 +27,7 @@ class ChannelpostCommand extends SystemCommand
     /**
      * @var string
      */
-    protected $description = 'Handle channel post';
+    protected $description = 'Обработка поста в канале';
 
     /**
      * @var string

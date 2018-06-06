@@ -35,7 +35,7 @@ class CallbackqueryCommand extends SystemCommand
     /**
      * @var string
      */
-    protected $description = 'Reply to callback query';
+    protected $description = 'Ответ на коллбек';
 
     /**
      * @var string

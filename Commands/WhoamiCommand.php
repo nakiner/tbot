@@ -33,7 +33,7 @@ class WhoamiCommand extends UserCommand
     /**
      * @var string
      */
-    protected $description = 'Show your id, name and username';
+    protected $description = 'Узнать мои данные';
 
     /**
      * @var string
@@ -77,9 +77,9 @@ class WhoamiCommand extends UserCommand
         ]);
 
         $caption = sprintf(
-            'Your Id: %d' . PHP_EOL .
-            'Name: %s %s' . PHP_EOL .
-            'Username: %s',
+            'User ID: %d' . PHP_EOL .
+            'Имя: %s %s' . PHP_EOL .
+            'Ник: %s',
             $user_id,
             $from->getFirstName(),
             $from->getLastName(),

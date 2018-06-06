@@ -32,12 +32,12 @@ class WhoisCommand extends AdminCommand
     /**
      * @var string
      */
-    protected $description = 'Lookup user or group info';
+    protected $description = 'Узнать информацию о пользователе';
 
     /**
      * @var string
      */
-    protected $usage = '/whois <id> or /whois <search string>';
+    protected $usage = '/whois <id> или /whois <искомое значение>';
 
     /**
      * @var string

@@ -27,7 +27,7 @@ class DebugCommand extends AdminCommand
     /**
      * @var string
      */
-    protected $description = 'Debug command to help find issues';
+    protected $description = 'Команда, которая поможет найти вероятные ошибки';
 
     /**
      * @var string

@@ -45,7 +45,7 @@ class CleanupCommand extends AdminCommand
     /**
      * @var string
      */
-    protected $description = 'Clean up the database from old records';
+    protected $description = 'Очистить БД от старых записей';
 
     /**
      * @var string

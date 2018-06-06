@@ -27,7 +27,7 @@ class ChannelchatcreatedCommand extends SystemCommand
     /**
      * @var string
      */
-    protected $description = 'Channel chat created';
+    protected $description = 'Канал создан';
 
     /**
      * @var string

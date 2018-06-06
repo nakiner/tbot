@@ -14,7 +14,6 @@ use Longman\TelegramBot\Commands\UserCommand;
 use Longman\TelegramBot\Request;
 use Longman\TelegramBot\Exception\TelegramException;
 use Longman\TelegramBot\Entities\InlineKeyboard;
-use Longman\TelegramBot\Conversation;
 
 /**
  * Пользовательская команда "/tasks"
@@ -39,7 +38,7 @@ class TasksCommand extends UserCommand
     /**
      * @var string
      */
-    protected $version = '0.0.1';
+    protected $version = '0.0.2';
 
     /**
      * @var string

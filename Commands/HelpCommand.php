@@ -35,7 +35,7 @@ class HelpCommand extends UserCommand
     /**
      * @var string
      */
-    protected $usage = '/help or /help <command>';
+    protected $usage = '/help или /help <command>';
 
     /**
      * @var string
