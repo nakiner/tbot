@@ -151,11 +151,12 @@ class Functions
             else
             {
                 $token = trim($update->getMessage()->getText(true));
-                $token = ($update->getMessage()->getCommand() == 'start' && strlen($token) == 10) ? $token : '';
+                $token = ($update->getMessage()->getCommand() == 'start' && strlen($token) == 10) ? $token : false;
 
+                if(!$token) return false;
                 $check->free_result();
                 $check = $this->db->query("SELECT id FROM users_allowed WHERE token = '$token'");
-                if($check->num_rows > 0)
+                if($check->num_rows > 0 && strlen($token) > 1)
                 {
                     $check->free_result();
                     $this->db->query("UPDATE users_allowed SET user_id = '$user_id' WHERE token = '$token'");
