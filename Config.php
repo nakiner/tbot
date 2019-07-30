@@ -65,6 +65,13 @@ class Config
      */
     public $manager_commands;
 
+    /**
+     * Прокси
+     *
+     * @var $proxy_path
+     */
+    public $proxy_path;
+
     function __construct()
     {
         $this->read_config();
@@ -91,6 +98,9 @@ class Config
         $this->download_path = __DIR__.$this->config_vars['download_path'];
         $this->upload_path = __DIR__.$this->config_vars['upload_path'];
         $this->url = $this->config_vars['bot_url'];
+
+        $this->proxy_path = "socks5h://{$this->config_vars['proxy_login']}:{$this->config_vars['proxy_login']}".
+            "@{$this->config_vars['proxy_addr']}:{$this->config_vars['proxy_port']}";
     }
 
     /**

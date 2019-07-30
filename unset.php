@@ -15,6 +15,11 @@ try
 {
     $telegram = new Longman\TelegramBot\Telegram($config->bot_api_key, $config->bot_username);
 
+    Longman\TelegramBot\Request::setClient(new \GuzzleHttp\Client([
+        'base_uri' => 'https://api.telegram.org',
+        'proxy'    => $config->proxy_path,
+    ]));
+
     $result = $telegram->deleteWebhook();
     if ($result->isOk()) echo $result->getDescription();
 }

@@ -16,6 +16,11 @@ try
     $telegram = new Longman\TelegramBot\Telegram($config->bot_api_key, $config->bot_username);
     $result = $telegram->setWebhook($config->url);
 
+    Longman\TelegramBot\Request::setClient(new \GuzzleHttp\Client([
+        'base_uri' => 'https://api.telegram.org',
+        'proxy'    => $config->proxy_path,
+    ]));
+
     // Для самоподписанных сертификатов
     //$certificate_path = '/path/to/cert.crt';
     //$result = $telegram->setWebhook($config->url, ['certificate' => $certificate_path]);
